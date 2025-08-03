@@ -159,6 +159,10 @@ async function attemptConnection(): Promise<boolean> {
     // Seed database with dummy data
     await seedDatabase();
     
+    // Seed game-specific data
+    const { gameDatabase } = await import('./gameDatabase');
+    await gameDatabase.seedGameData();
+    
     return true;
   } catch (error) {
     console.error('Error connecting to database:', error);

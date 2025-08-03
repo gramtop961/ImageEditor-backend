@@ -295,6 +295,103 @@ app.delete('/api/items/:id', requireDatabase, async (req: express.Request, res: 
   }
 });
 
+// Game API endpoints
+app.post('/api/game/users', requireDatabase, async (req: express.Request, res: express.Response) => {
+  try {
+    const { gameDatabase } = await import('./config/gameDatabase');
+    const user = await gameDatabase.createUser(req.body);
+    res.status(201).json(user);
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+app.get('/api/game/users/:id', requireDatabase, async (req: express.Request, res: express.Response) => {
+  try {
+    const { gameDatabase } = await import('./config/gameDatabase');
+    const user = await gameDatabase.getUserById(parseInt(req.params.id));
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+app.get('/api/game/users', requireDatabase, async (req: express.Request, res: express.Response) => {
+  try {
+    const users = await collection.find({ type: 'user', username: { $exists: true } }).toArray();
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.post('/api/game/sessions', requireDatabase, async (req: express.Request, res: express.Response) => {
+  try {
+    const { playerXId, playerOId } = req.body;
+    const { gameDatabase } = await import('./config/gameDatabase');
+    const gameSession = await gameDatabase.createGameSession(playerXId, playerOId);
+    res.status(201).json(gameSession);
+  } catch (error) {
+    console.error('Error creating game session:', error);
+    res.status(500).json({ error: 'Failed to create game session' });
+  }
+});
+
+app.get('/api/game/sessions/:id', requireDatabase, async (req: express.Request, res: express.Response) => {
+  try {
+    const { gameDatabase } = await import('./config/gameDatabase');
+    const gameSession = await gameDatabase.getGameSession(parseInt(req.params.id));
+    if (!gameSession) {
+      return res.status(404).json({ error: 'Game session not found' });
+    }
+    res.json(gameSession);
+  } catch (error) {
+    console.error('Error fetching game session:', error);
+    res.status(500).json({ error: 'Failed to fetch game session' });
+  }
+});
+
+app.put('/api/game/sessions/:id', requireDatabase, async (req: express.Request, res: express.Response) => {
+  try {
+    const { gameDatabase } = await import('./config/gameDatabase');
+    await gameDatabase.updateGameSession(parseInt(req.params.id), req.body);
+    const updatedSession = await gameDatabase.getGameSession(parseInt(req.params.id));
+    res.json(updatedSession);
+  } catch (error) {
+    console.error('Error updating game session:', error);
+    res.status(500).json({ error: 'Failed to update game session' });
+  }
+});
+
+app.get('/api/game/leaderboard', requireDatabase, async (req: express.Request, res: express.Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const { gameDatabase } = await import('./config/gameDatabase');
+    const leaderboard = await gameDatabase.getLeaderboard(limit);
+    res.json(leaderboard);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
+app.get('/api/game/stats', requireDatabase, async (req: express.Request, res: express.Response) => {
+  try {
+    const { gameDatabase } = await import('./config/gameDatabase');
+    const stats = await gameDatabase.getGameStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching game stats:', error);
+    res.status(500).json({ error: 'Failed to fetch game stats' });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req: express.Request, res: express.Response) => {
   res.json({
